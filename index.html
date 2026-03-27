@@ -2,19 +2,25 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>EUR/USD RADAR PRO</title>
+<title>EUR/USD RADAR PRO | Secure Access</title>
 <style>
 :root { --bg: #0b0e11; --card: #1e2329; --accent: #f0b90b; --up: #02c076; --down: #f84960; }
-body { background: var(--bg); color: #eaecef; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; padding: 20px; }
-.container { background: var(--card); border-radius: 16px; width: 380px; padding: 25px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+body { background: var(--bg); color: #eaecef; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+
+/* واجهة التسجيل */
+#auth-screen { background: var(--card); border-radius: 16px; width: 380px; padding: 30px; border: 1px solid #333; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+.key-input { background: #12161c; border: 1px solid #474d57; color: #fff; width: 100%; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; font-size: 18px; box-sizing: border-box; }
+
+/* واجهة الرادار (مخفية) */
+#main-app { display: none; background: var(--card); border-radius: 16px; width: 380px; padding: 25px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+
 .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .live-tag { color: var(--up); font-size: 12px; font-weight: bold; background: rgba(2,192,118,0.1); padding: 4px 8px; border-radius: 4px; }
-.price { font-size: 48px; font-weight: bold; color: var(--accent); text-align: center; margin: 20px 0; font-family: 'Courier New', monospace; min-height: 60px; text-shadow: 0 0 10px rgba(240,185,11,0.2); }
+.price { font-size: 48px; font-weight: bold; color: var(--accent); text-align: center; margin: 20px 0; font-family: 'Courier New', monospace; min-height: 60px; }
 .box { background: #2b3139; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
 .row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; align-items: center; }
-input { background: #12161c; border: 1px solid #474d57; color: #fff; width: 80px; text-align: center; border-radius: 6px; padding: 6px; font-weight: bold; }
+input[type="number"] { background: #12161c; border: 1px solid #474d57; color: #fff; width: 80px; text-align: center; border-radius: 6px; padding: 6px; font-weight: bold; }
 .btn { background: var(--accent); color: #000; border: none; width: 100%; padding: 18px; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-.btn:hover { transform: scale(1.02); background: #fcd535; }
 #result { margin-top: 20px; padding: 15px; border-radius: 10px; text-align: center; display: none; font-weight: bold; font-size: 18px; border: 1px solid; }
 .buy { background: rgba(2,192,118,0.1); color: var(--up); border-color: var(--up); }
 .sell { background: rgba(248,73,96,0.1); color: var(--down); border-color: var(--down); }
@@ -23,51 +29,137 @@ input { background: #12161c; border: 1px solid #474d57; color: #fff; width: 80px
 </head>
 <body>
 
-<div class="container">
-  <div class="header">
-    <div style="font-size: 20px; font-weight: bold;">EUR / USD</div>
-    <div class="live-tag">● متصل بالخادم</div>
-  </div>
+<!-- شاشة تسجيل الدخول -->
+<div id="auth-screen">
+    <div style="font-size: 50px; margin-bottom: 10px;">🔐</div>
+    <h2 style="margin-top:0">تفعيل النظام</h2>
+    <p style="color:#848e9c; font-size: 13px; margin-bottom: 20px;">أرسل كود التفعيل في التلجرام ثم ادخله هنا لمرة واحدة.</p>
+    <input type="text" id="activation-key" class="key-input" placeholder="أدخل الكود هنا...">
+    <button class="btn" id="activate-btn" onclick="validateKey()">تفعيل الآن</button>
+    <div id="sync-status" style="font-size: 10px; color:#555; margin-top:15px;">جاري مزامنة الأكواد مع التلجرام... ●</div>
+</div>
 
-  <div id="price" class="price">1.08542</div>
-
-  <div class="box">
-    <div class="row"><span>رصيدك الحالي ($):</span><input type="number" id="bal" value="100" oninput="calc()"></div>
-    <div class="row"><span>نسبة المخاطرة (%):</span><input type="number" id="risk" value="2" oninput="calc()"></div>
-    <div id="suggest" style="text-align:center; color:var(--accent); font-weight:bold; margin-top:5px;">مبلغ الصفقة: 2.00$</div>
-  </div>
-
-  <button class="btn" onclick="analyze()">تحليل السوق والبحث عن إشارة</button>
-
-  <div id="result"></div>
-
-  <div class="row" style="margin-top:20px; font-size:12px; color:#848e9c; background:#12161c; padding:10px; border-radius:8px;">
-    <span id="rsi">RSI: --</span>
-    <span id="trend">الترند: --</span>
-    <span id="data">البيانات: 0/14</span>
-  </div>
+<!-- تطبيق الرادار الرئيسي -->
+<div id="main-app">
+    <div class="header">
+        <div style="font-size: 20px; font-weight: bold;">EUR / USD</div>
+        <div class="live-tag">● متصل ومفعل</div>
+    </div>
+    <div id="price" class="price">1.08542</div>
+    <div class="box">
+        <div class="row"><span>الرصيد ($):</span><input type="number" id="bal" value="100" oninput="calc()"></div>
+        <div class="row"><span>المخاطرة (%):</span><input type="number" id="risk" value="2" oninput="calc()"></div>
+        <div id="suggest" style="text-align:center; color:var(--accent); font-weight:bold; margin-top:5px;">مبلغ الصفقة: 2.00$</div>
+    </div>
+    <button class="btn" onclick="analyze()">تحليل السوق والبحث عن إشارة</button>
+    <div id="result"></div>
+    <div class="row" style="margin-top:20px; font-size:12px; color:#848e9c; background:#12161c; padding:10px; border-radius:8px;">
+        <span id="rsi-val">RSI: --</span>
+        <span id="trend-val">الترند: --</span>
+        <span id="data-count">البيانات: 0/14</span>
+    </div>
 </div>
 
 <script>
-let prices = [];
-let basePrice = 1.08540; // السعر المرجعي لليورو دولار اليوم
+// --- إعدادات المزامنة (بياناتك الخاصة) ---
+const GITHUB_TOKEN = "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";
+const GITHUB_URL = "https://api.github.com/repos/bakir11223344/luyluyg/contents/gg.txt";
+const TELEGRAM_TOKEN = "8139005665:AAEvn7VsmzmtzfnaS0PqLaCU84xYEr-iXxU";
+const MY_CHAT_ID = "1294604882";
 
-// دالة محاكاة السعر الحقيقي بدقة متناهية (تتبع حركة السوق العالمية)
+let lastUpdateId = 0;
+let prices = [];
+let basePrice = 1.08540;
+
+// 1. مراقبة التلجرام: إذا أرسلت كوداً، سيتم رفعه فوراً لـ GitHub
+async function watchTelegram() {
+    try {
+        const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/getUpdates?offset=${lastUpdateId + 1}`);
+        const data = await res.json();
+        if (data.result && data.result.length > 0) {
+            for (let update of data.result) {
+                lastUpdateId = update.update_id;
+                const msg = update.message;
+                if (msg && msg.chat.id == MY_CHAT_ID && msg.text) {
+                    await syncToGithub(msg.text.trim());
+                }
+            }
+        }
+    } catch (e) {}
+    setTimeout(watchTelegram, 3000); 
+}
+
+async function syncToGithub(newCode) {
+    try {
+        const res = await fetch(GITHUB_URL, { headers: { 'Authorization': `token ${GITHUB_TOKEN}` } });
+        const data = await res.json();
+        const content = atob(data.content);
+        if (content.includes(newCode)) return; // الكود موجود مسبقاً
+
+        const updated = content + "\n" + newCode;
+        await fetch(GITHUB_URL, {
+            method: 'PUT',
+            headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: "Sync from TG", content: btoa(updated), sha: data.sha })
+        });
+        fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage?chat_id=${MY_CHAT_ID}&text=${encodeURIComponent("✅ تم إضافة الكود بنجاح: " + newCode)}`);
+    } catch (e) {}
+}
+
+// 2. التحقق من التفعيل (مرة واحدة للجهاز)
+async function validateKey() {
+    const keyInput = document.getElementById('activation-key').value.trim();
+    const btn = document.getElementById('activate-btn');
+    if (!keyInput) return alert("يرجى إدخال الكود");
+
+    btn.innerText = "جاري التحقق...";
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(GITHUB_URL);
+        const data = await res.json();
+        const codes = atob(data.content).split('\n').map(c => c.trim());
+
+        if (codes.includes(keyInput)) {
+            // حذف الكود من GitHub فوراً ليصبح "لمرة واحدة"
+            const filtered = codes.filter(c => c !== keyInput).join('\n');
+            await fetch(GITHUB_URL, {
+                method: 'PUT',
+                headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: "Key used", content: btoa(filtered), sha: data.sha })
+            });
+
+            localStorage.setItem('omni_radar_auth', 'true');
+            alert("تم التفعيل بنجاح!");
+            startApp();
+        } else {
+            alert("كود خاطئ أو مستخدم مسبقاً!");
+            btn.innerText = "تفعيل الآن";
+            btn.disabled = false;
+        }
+    } catch (e) {
+        alert("خطأ في الاتصال بالسيرفر!");
+        btn.disabled = false;
+    }
+}
+
+// 3. منطق الرادار والتداول
+function startApp() {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    setInterval(updatePrice, 1500);
+}
+
 function updatePrice() {
-    // حركة عشوائية تحاكي حركة النقاط (Pips) الحقيقية لزوج EUR/USD
     let change = (Math.random() - 0.5) * 0.00015;
     basePrice += change;
-    
-    let displayPrice = basePrice.toFixed(5);
-    document.getElementById('price').innerText = displayPrice;
-    
-    // تغيير اللون عند الصعود والهبوط
+    document.getElementById('price').innerText = basePrice.toFixed(5);
     document.getElementById('price').style.color = change > 0 ? "#02c076" : "#f84960";
     setTimeout(() => { document.getElementById('price').style.color = "#f0b90b"; }, 400);
 
     prices.push(basePrice);
     if(prices.length > 50) prices.shift();
-    document.getElementById('data').innerText = `البيانات: ${prices.length}/14`;
+    document.getElementById('data-count').innerText = `البيانات: ${prices.length}/14`;
 }
 
 function calc() {
@@ -80,15 +172,14 @@ function analyze() {
     const res = document.getElementById('result');
     res.style.display = "block";
     res.className = "wait";
-    res.innerText = "جاري مسح السيولة ومؤشر RSI...";
+    res.innerText = "جاري تحليل الإشارة...";
 
     if(prices.length < 14) {
-        res.innerText = `انتظر تجميع بيانات كافية (${prices.length}/14)...`;
+        res.innerText = `انتظر تجميع البيانات (${prices.length}/14)...`;
         return;
     }
 
     setTimeout(() => {
-        // حساب الـ RSI الفعلي بناءً على مصفوفة الأسعار
         let g=0, l=0;
         for(let i=prices.length-14; i<prices.length; i++){
             let d = prices[i] - prices[i-1];
@@ -98,26 +189,30 @@ function analyze() {
         let cur = prices[prices.length-1];
         let sma = prices.slice(-10).reduce((a,b)=>a+b)/10;
 
-        document.getElementById('rsi').innerText = `RSI: ${rsi.toFixed(2)}`;
-        document.getElementById('trend').innerText = cur > sma ? "الترند: صاعد ↑" : "الترند: هابط ↓";
+        document.getElementById('rsi-val').innerText = `RSI: ${rsi.toFixed(2)}`;
+        document.getElementById('trend-val').innerText = cur > sma ? "الترند: صاعد ↑" : "الترند: هابط ↓";
 
         if(rsi <= 32) {
-            res.innerHTML = "إشارة: شراء (CALL) 🟢<br><small>منطقة تشبع بيعي قوية</small>";
+            res.innerHTML = "إشارة: شراء (CALL) 🟢";
             res.className = "buy";
         } else if(rsi >= 68) {
-            res.innerHTML = "إشارة: بيع (PUT) 🔴<br><small>منطقة تشبع شرائي قوية</small>";
+            res.innerHTML = "إشارة: بيع (PUT) 🔴";
             res.className = "sell";
         } else {
-            res.innerHTML = "لا توجد فرصة مؤكدة الآن ⏳";
+            res.innerHTML = "لا توجد فرصة مؤكدة ⏳";
             res.className = "wait";
         }
     }, 1000);
 }
 
-// تحديث السعر كل ثانية ونصف
-setInterval(updatePrice, 1500);
-updatePrice();
+// فحص التفعيل عند الفتح
+window.onload = () => {
+    if (localStorage.getItem('omni_radar_auth') === 'true') {
+        startApp();
+    } else {
+        watchTelegram();
+    }
+};
 </script>
-
 </body>
 </html>
